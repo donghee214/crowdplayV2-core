@@ -1,10 +1,13 @@
-const express = require("express");
+import express, { Request, Response, NextFunction } from "express";
+import db from "./firestore/init";
+
 const app = express();
 const port = 8080; // default port to listen
 
 // define a route handler for the default home page
-app.get("/", (req, res) => {
-  res.send("Hello world!");
+app.get("/", (req: Request, res: Response) => {
+  console.log("hit");
+  res.send("Hello world!!!");
 });
 
 // start the Express server

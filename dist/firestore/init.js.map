@@ -1,0 +1,1 @@
+{"version":3,"file":"init.js","sourceRoot":"","sources":["../../src/firestore/init.ts"],"names":[],"mappings":";;;;;;;;;AAAA,sDAAwC;AAExC,KAAK,CAAC,aAAa,CAAC;IAClB,UAAU,EAAE,KAAK,CAAC,UAAU,CAAC,kBAAkB,EAAE;CAClD,CAAC,CAAC;AAEH,MAAM,EAAE,GAAG,KAAK,CAAC,SAAS,EAAE,CAAC;AAE7B,kBAAe,EAAE,CAAC"}
