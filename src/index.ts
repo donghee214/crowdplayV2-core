@@ -9,13 +9,16 @@ import { ApolloServer } from 'apollo-server-express'
 const PORT = 4000
 function parseCookies (request) {
     var list = {},
-        rc = request.headers.cookie;
+    rc = request.headers.cookie;
     rc && rc.split(';').forEach(function( cookie ) {
         var parts = cookie.split('=');
         list[parts.shift().trim()] = decodeURI(parts.join('='));
     });
     return list;
 }
+
+// const app = express();
+// app.use(cors({ origin: 'http://localhost:3000',  credentials: true  }))
 
 const server = new ApolloServer({
     typeDefs,
@@ -26,13 +29,13 @@ const server = new ApolloServer({
             return connection.context;
         } 
         return { cookies: parseCookies(req) }
-    }
+    },
 });
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 
-server.applyMiddleware({ app });
+server.applyMiddleware({ app, cors: false });
 
 const httpServer = http.createServer(app);
 server.installSubscriptionHandlers(httpServer);

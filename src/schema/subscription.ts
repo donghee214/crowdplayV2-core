@@ -10,9 +10,9 @@ export enum TOPIC{
 export default {
     songAdded: {
         subscribe: withFilter(
-            () => pubsub.asyncIterator(TOPIC.SONG_ADDED),
+            () => pubsub.asyncIterator("SONG_ADDED"),
             (payload, variables) => {
-                return payload.roomId === variables.roomId
+                return payload.roomId == variables.roomId
             }
-        )}
+    )},
 }

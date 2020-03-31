@@ -1,6 +1,6 @@
 import admin from "../database/firestore"
-import { RoomType, UserType, SongType } from "../models/types"
-import { getRecs } from "../spotify/spotifyApis"
+import { RoomType, UserType } from "../models/types"
+import { getRecs, getSongs, getSearch } from "../spotify/spotifyApis"
 
 export default {
     room: async (parent, args) => {
@@ -35,11 +35,20 @@ export default {
             limit: 50
         })
     },
-    // songs: async (parent, args) => {
-    //     const songDocs = await admin
-    //         .firestore()
-    //         .collection(`rooms/${args.id}/songs`)
-    //         .get()
-    //     return songDocs.docs.map((song) => song.data()) as SongType[]
-    // }
+    search: async (parent, args) => {
+        return getSearch({ 
+            q: args.q, 
+            type: ["album", "artist", "playlist", "track"], 
+            limit: args.limit,
+            offset: args.offset
+        })
+    },
+    songs: async (parent, args) => {
+        const songCollection = await admin
+            .firestore()
+            .collection(`rooms/${args.roomId}/songs`)
+            .get()
+        const songs = songCollection.docs.map((song) => song.data())
+        return songs.sort((a, b) => b.score - a.score)
+    }
 }

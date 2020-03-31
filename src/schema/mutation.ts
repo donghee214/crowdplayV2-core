@@ -1,5 +1,8 @@
 import admin from "../database/firestore"
-import { UserType } from "../models/types"
+import { UserType, SongType, SpotifySongType } from "../models/types"
+import { attachSongListener } from "../database/firestore"
+import { getSong } from "../spotify/spotifyApis"
+var Vibrant = require('node-vibrant')
 
 export default {
     removeUserInRoom: async (parent, args) => {
@@ -41,18 +44,20 @@ export default {
             .delete()
         return "success"
     },
-    addRoom: async (parent, args) => {
-        const roomDoc = await admin
+    addRoom: async (parent, args: { id: string, adminId: string }) => {
+        const roomDoc = admin
             .firestore()
             .collection('rooms')
-            .add({ ...args })
+            .doc(args.id)
+        await roomDoc.set(args)
+        await attachSongListener(args)
         return roomDoc
     },
     addUser: async (parent, args) => {
         const userDoc = await admin
             .firestore()
             .collection('users')
-            .add({ ...args })
+            .add(args)
         return userDoc
     },
     addUserToRoom: async (parent, args) => {
@@ -70,23 +75,82 @@ export default {
     },
     addSongToRoom: async (
             parent,
-            args: { trackId: string, roomId: string },
+            args: { song: SpotifySongType, roomId: string },
             context
         ) => {
         try{
-            const roomDoc = await admin
+            const docRef = admin
                 .firestore()
                 .collection(`rooms/${args.roomId}/songs`)
-                .doc(args.trackId)
-                .set({
-                    trackId: args.trackId,
+                .doc(args.song.id)
+            const songDoc = await docRef.get()
+            if (!songDoc.exists){
+                docRef.set({
+                    trackId: args.song.id,
                     score: 1,
-                    voters: []
+                    voters: [],
+                    song: args.song
                 })
-            return "Success"
+                return "Success"
+            }
+            else{
+                return "Song already added"
+            }
+            
         }
         catch(error){
             console.error("Error writing document: ", error);
         }
+    },
+    upvoteSong: async (parent, args: { roomId: string, trackId: string }) => {
+        const songRef = admin
+                            .firestore()
+                            .doc(`rooms/${args.roomId}/songs/${args.trackId}`)
+        songRef.update({
+            score: admin.firestore.FieldValue.increment(1)
+        })
+        return "Success"
+    },
+    nextSong: async (parent, args: { roomId: string }) => {
+        const songDocs = await admin
+                            .firestore()
+                            .collection(`rooms/${args.roomId}/songs`)
+                            .get()
+        let nextSong: SongType;
+        songDocs.docs.forEach(songDoc => {
+            const song = songDoc.data() as SongType
+            if(!nextSong || song.score > nextSong.score) {
+                nextSong = song
+            }
+        });
+
+        // fetch the song from spotify 
+        // const song: SpotifySongType = await getSong(nextSong.trackId)
+
+        // update the current song
+        admin
+            .firestore()
+            .doc(`rooms/${args.roomId}`)
+            .update({
+                currentSong: nextSong
+            })
+
+        // remove that song from the collection
+        admin
+            .firestore()
+            .doc(`rooms/${args.roomId}/songs/${nextSong.song.id}`)
+            .delete()
+        
+        // get colour pallette
+        const palette = await Vibrant.from(nextSong.song.album.images[0].url).getPalette()
+        admin
+            .firestore()
+            .doc(`rooms/${args.roomId}`)
+            .update({
+                vibrantColour: palette.Vibrant.getRgb(),
+                lightVibrantColour: palette.LightVibrant.getRgb(),
+                darkVibrantColour: palette.DarkVibrant.getRgb()
+            })
+        return "Success"
     }
 }

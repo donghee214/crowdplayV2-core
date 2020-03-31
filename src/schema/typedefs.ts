@@ -1,10 +1,44 @@
 import admin from "../database/firestore"
-import { RoomType, UserType, SongType } from "../models/types"
+import { RoomType, UserType } from "../models/types"
 import { gql } from 'apollo-server-express'
 import { getRecs, getSongs } from "../spotify/spotifyApis"
 import { spotifyApi } from "../spotify/serverAuth"
 
 export const typeDefs = gql`
+    input ImageInput {
+        height: String
+        width: String
+        url: String
+    }
+
+    input ArtistInput {
+        id: ID
+        name: String
+        uri: String
+        href: String
+        external_urls: String
+    }
+
+    input AlbumInput{
+        id: ID
+        album_type: String
+        href: String
+        name: String
+        images: [ImageInput]
+    }
+
+    input SongInput {
+        id: ID
+        name: String
+        album: AlbumInput
+        artists: [ArtistInput]
+        duration_ms: Int
+        href: String
+        popularity: Int
+        preview_url: String
+        uri: String
+    }
+
     type Room{
         id: ID
         name: String
@@ -28,9 +62,14 @@ export const typeDefs = gql`
     type Album{
         id: ID
         album_type: String
+        artists: [Artist]
         href: String
         name: String
         images: [Image]
+    }
+
+    type ArtistFollowers{
+        total: Int
     }
 
     type Artist{
@@ -38,14 +77,21 @@ export const typeDefs = gql`
         name: String
         uri: String
         href: String
-        extrnal_urls: String
+        external_urls: String
+        images: [Image]
+        followers: ArtistFollowers
+        genres: [String]
     }
 
     type Song{
-        id: ID
+        trackId: ID
         score: Int
         voters: [String]
-        isRec: Boolean
+        song: SpotifySong
+    }
+
+    type SpotifySong{
+        id: ID
         name: String
         album: Album
         artists: [Artist]
@@ -56,8 +102,35 @@ export const typeDefs = gql`
         uri: String
     }
 
+    type TrackSummary{
+        href: String
+        total: Int
+    }
+
     type Subscription {
         songAdded(roomId: ID): Song
+        onConnect: String
+    }
+
+    type Playlist {
+        collaborative: Boolean
+        description: String
+        href: String
+        id: String
+        images: [Image]
+        name: String
+        primary_color: String
+        snapshot_id: String
+        tracks: TrackSummary
+        type: String
+        uri: String
+    }
+
+    type SeachResult{
+        artists: [Artist]
+        tracks: [SpotifySong]
+        albums: [Album]
+        playlists: [Playlist]
     }
 
     type Query{
@@ -65,18 +138,21 @@ export const typeDefs = gql`
         user(id: ID): User
         rooms: [Room]
         users: [User]
-        songRecs(seed: [String]): [Song]
+        songRecs(seed: [String]): [SpotifySong]
+        songs(roomId: ID): [Song]
+        search(q: String, limit: Int, offset: Int): SeachResult
     }
 
     type Mutation{
-        addRoom(name: String, adminId: ID): Room
+        addRoom(id: String, adminId: ID): Room
         addUser(name: String, currentRoomId: ID): User
         addUserToRoom(roomId: ID, userId: ID): String
-        addSongToRoom(roomId: ID, trackId: ID): String
+        addSongToRoom(roomId: ID, song: SongInput): String
         removeUserInRoom(roomId:ID, userId: ID): String
         deleteUser(userId: ID): String
         deleteRoom(roomId: ID): String
-
+        upvoteSong(roomId: ID!, trackId: ID!): String
+        nextSong( roomId: ID!): String
     }
 `
 
@@ -95,12 +171,7 @@ const Room = {
             .collection(`rooms/${parent.id}/songs`)
             .get()
         const songs = songCollection.docs.map((song) => song.data())
-        const songIds = songs.map((song) => song.trackId)
-        const songsComplete = await getSongs(songIds)
-        songsComplete.forEach((song, index) => {
-            song.score = songs[index].score 
-        }) as SongType[];
-        return songsComplete 
+        return songs.sort((a, b) => b.score - a.score) 
     },
     users: async (parent, args) => {
         const userDocs = await admin
