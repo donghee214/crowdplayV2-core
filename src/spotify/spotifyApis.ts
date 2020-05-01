@@ -1,7 +1,9 @@
 import { RoomType, UserType, SpotifySongType } from "../models/types"
 import { spotifyApi, createSpotifyNode } from './serverAuth'
 
-//TODO CATCH THE TIMEOUT ERROR THEN
+// DEPRECIATE THIS FILES TRY AND CATCH BLOCK FOR A WRAPPER FUNCTION TO JUST REDO IT IF CALL FAILS
+
+
 export const getRecs = async (variables) => {
     try{
         let songs = await spotifyApi.getRecommendations(variables)
@@ -43,6 +45,104 @@ export const getSong = async(variables: string) => {
         if(err.status == 401){
             await createSpotifyNode()
             return getSong(variables)
+        }
+    }
+}
+
+export const getPlaylist = async(playlistId: string) => {
+    try{
+        return spotifyApi.getPlaylist(playlistId, {
+            fields: ["description", "followers", "id", "images", "name" , "owner", "uri"]
+        })
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getPlaylist(playlistId)
+        }
+    }
+}
+
+export const getPlaylistTracks = async(playlistId: string) => {
+    try{
+        return spotifyApi.getPlaylistTracks(playlistId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getPlaylistTracks(playlistId)
+        }
+    }
+}
+
+export const getAlbum = async(albumId: string) => {
+    try{
+        return spotifyApi.getAlbum(albumId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getAlbum(albumId)
+        }
+    }
+}
+
+export const getAlbumTracks = async(albumId: string) => {
+    try{
+        return spotifyApi.getAlbumTracks(albumId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getAlbumTracks(albumId)
+        }
+    }
+}
+
+export const getArtist = async(artistId: string) => {
+    try{
+        return await spotifyApi.getArtist(artistId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getArtist(artistId)
+        }
+    }
+}
+
+export const getArtistTracks = async(artistId: string) => {
+    try{
+        return spotifyApi.getArtistTopTracks(artistId, "CA")
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getArtistTracks(artistId)
+        }
+    }
+}
+
+export const getArtistAlbums = async(artistId: string) => {
+    try{
+        return spotifyApi.getArtistAlbums(artistId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getArtistTracks(artistId)
+        }
+    }
+}
+
+export const getArtistRelatedArtists = async(artistId: string) => {
+    try{
+        return spotifyApi.getArtistRelatedArtists(artistId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getArtistRelatedArtists(artistId)
         }
     }
 }

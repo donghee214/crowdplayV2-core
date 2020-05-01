@@ -1,7 +1,7 @@
 import admin from "../database/firestore"
 import { RoomType, UserType } from "../models/types"
 import { gql } from 'apollo-server-express'
-import { getRecs, getSongs } from "../spotify/spotifyApis"
+import { getAlbumTracks, getPlaylistTracks, getArtistTracks, getArtistRelatedArtists, getArtistAlbums } from "../spotify/spotifyApis"
 import { spotifyApi } from "../spotify/serverAuth"
 
 export const typeDefs = gql`
@@ -66,6 +66,7 @@ export const typeDefs = gql`
         href: String
         name: String
         images: [Image]
+        tracks: [SpotifySong]
     }
 
     type ArtistFollowers{
@@ -78,9 +79,12 @@ export const typeDefs = gql`
         uri: String
         href: String
         external_urls: String
-        images: [Image]
         followers: ArtistFollowers
+        images: [Image]
         genres: [String]
+        albums: [Album]
+        tracks: [SpotifySong]
+        relatedArtists: [Artist]
     }
 
     type Song{
@@ -102,14 +106,13 @@ export const typeDefs = gql`
         uri: String
     }
 
-    type TrackSummary{
-        href: String
-        total: Int
-    }
-
     type Subscription {
         songAdded(roomId: ID): Song
         onConnect: String
+    }
+
+    type Owner{
+        display_name: String
     }
 
     type Playlist {
@@ -121,9 +124,10 @@ export const typeDefs = gql`
         name: String
         primary_color: String
         snapshot_id: String
-        tracks: TrackSummary
+        tracks: [SpotifySong]
         type: String
         uri: String
+        owner: Owner
     }
 
     type SeachResult{
@@ -141,6 +145,10 @@ export const typeDefs = gql`
         songRecs(seed: [String]): [SpotifySong]
         songs(roomId: ID): [Song]
         search(q: String, limit: Int, offset: Int): SeachResult
+        song(trackId: ID!): SpotifySong
+        album(albumId: ID!): Album
+        playlist(playlistId: ID!): Playlist
+        artist(artistId: ID!): Artist
     }
 
     type Mutation{
@@ -152,9 +160,39 @@ export const typeDefs = gql`
         deleteUser(userId: ID): String
         deleteRoom(roomId: ID): String
         upvoteSong(roomId: ID!, trackId: ID!): String
-        nextSong( roomId: ID!): String
+        nextSong(roomId: ID!): String
     }
 `
+
+// FALLBACK TYPE RESOLVERS, IF THE OPTIMIZATION OF CALLING THE APIS IN PARALLEL FAILS
+const Album = {
+    tracks: async (parent, args) => {
+        if(!parent.tracks) return getAlbumTracks(parent.id)
+        return parent.tracks
+    }
+}
+
+const Artist = {
+    tracks: async (parent, args) => {
+        if(!parent.tracks) return getArtistTracks(parent.id)
+        return parent.tracks
+    },
+    albums: async (parent, args) => {
+        if(!parent.albums) return getArtistAlbums(parent.id)
+        return parent.albums
+    },
+    relatedArtists: async (parent, args) => {
+        if(!parent.relatedArtists) return getArtistRelatedArtists(parent.id)
+        return parent.relatedArtists
+    }
+}
+
+const Playlist = {
+    tracks: async (parent, args) => {
+        if(!parent.tracks) return getPlaylistTracks(parent.id)
+        return parent.tracks
+    }
+}
 
 const Room = {
     adminUser: async (parent, args) => {
@@ -193,25 +231,12 @@ const User = {
     }
 }
 
-const Song = {
-    data: async (parent, args) => {
-        const roomDoc = await admin
-            .firestore()
-            .doc(`rooms/${parent.id}/songs`)
-            .get()
-        const room = roomDoc.data()
-        const songIds = room.songs.map((song) => song.trackId)
-        const songsComplete = await getSongs(songIds)
-        songsComplete.forEach((song, index) => {
-            song.score = room.songs[index].score 
-        });
-        return songsComplete
-    }
-}
-
 export const typeResolvers = {
     Room,
-    User
+    User,
+    Album,
+    Playlist,
+    Artist
 }
 
 // const {
