@@ -1,10 +1,9 @@
-import cors from 'cors'
-import http from 'http'
 import express from 'express'
 import { typeDefs } from "./schema/typedefs"
 import resolvers from "./schema/resolvers"
 import { ApolloServer } from 'apollo-server-express'
-// import bodyParser from 'body-parser'
+import { swapHandler, refreshHandler } from "./spotify/refreshToken"
+import bodyParser from 'body-parser'
 
 const PORT = 4000
 function parseCookies (request) {
@@ -16,9 +15,6 @@ function parseCookies (request) {
     });
     return list;
 }
-
-// const app = express();
-// app.use(cors({ origin: 'http://localhost:3000',  credentials: true  }))
 
 const server = new ApolloServer({
     typeDefs,
@@ -33,14 +29,15 @@ const server = new ApolloServer({
 });
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 
-server.applyMiddleware({ app, cors: false });
+app.use(express.urlencoded({extended: false}));
+app.use(bodyParser.json())
 
-const httpServer = http.createServer(app);
-server.installSubscriptionHandlers(httpServer);
+app.post('/swap', swapHandler)
+app.post('/refresh', refreshHandler)
 
-httpServer.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`)
-    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
-})
+server.applyMiddleware({ app, cors: { origin: 'http://localhost:3000', credentials: true } });
+
+app.listen({ port: PORT }, () =>
+  console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
+)

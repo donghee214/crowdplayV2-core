@@ -1,8 +1,24 @@
 import admin from "../database/firestore"
 import { RoomType, UserType } from "../models/types"
-import { getRecs, getSong, getSearch, getArtist, getPlaylist, getAlbum, getAlbumTracks, getArtistTracks, getArtistAlbums, getArtistRelatedArtists, getPlaylistTracks } from "../spotify/spotifyApis"
-import { spotifyApi } from "../spotify/serverAuth"
+import { 
+    getRecs,
+    getSong,
+    getSearch,
+    getArtist,
+    getPlaylist,
+    getAlbum,
+    getAlbumTracks,
+    getArtistTracks,
+    getArtistAlbums,
+    getArtistRelatedArtists,
+    getPlaylistTracks,
+    getUser,
+    getMe
+} from "../spotify/spotifyApis"
+
 import graphqlFields from "graphql-fields"
+
+var SpotifyWebApi = require('spotify-web-api-node');
 
 export default {
     room: async (parent, args) => {
@@ -17,12 +33,10 @@ export default {
         return room
     },
     user: async (parent, args) => {
-        const userDoc = await admin
-            .firestore()
-            .doc(`users/${args.id}`)
-            .get()
-        const user = userDoc.data() as UserType || undefined
-        return user
+        return getUser(args.id)
+    },
+    me: async(parent, args) => {
+        return getMe(args.accessToken)
     },
     rooms: async (parent, args) => {
         const userDocs = await admin
@@ -128,4 +142,16 @@ export default {
         if(fieldsQueried < Object.keys(topLevelFields).length) ret = { ...ret, ...apiResults[dataIndices["data"]]}
         return ret
     },
+    getAuthorizeUrl: async(parent, args, context, info) => {
+        const credentials = {
+            clientId : process.env.SPOTIFY_CLIENT_ID,
+            clientSecret : process.env.SPOTIFY_CLIENT_SECRET,
+            redirectUri: args.redirectUri
+        }
+        const spotifyApiNode = new SpotifyWebApi(credentials)
+        const authorizeUrl = spotifyApiNode.createAuthorizeURL(args.scopes)
+        return {
+            url: authorizeUrl
+        }
+    }
 }

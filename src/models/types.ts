@@ -6,9 +6,9 @@ export interface RoomType {
 }
 
 export interface UserType{
-    id: string;
-    name: string;
-    currentRoomId: string;
+  id: string
+  display_name: string
+  images: Image[]
 }
 
 export interface Artist {

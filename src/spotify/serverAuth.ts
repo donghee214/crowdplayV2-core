@@ -10,9 +10,13 @@ export let spotifyApi;
 export const createSpotifyNode = async () => {
     spotifyApi = new SpotifyWebApi(credentials);
     const data = await spotifyApi.clientCredentialsGrant()
-    // console.log("create spotify node res", data)
     spotifyApi.setAccessToken(data.body['access_token']);
 }
 
+// this is called when frontend has already gotten access_token
+export const createUserAuthSpotifyNode = (access_token) => {
+    const userSpotifyNode = new SpotifyWebApi(credentials)
+    userSpotifyNode.setAccessToken(access_token)
+    return userSpotifyNode
+}
 
-createSpotifyNode()

@@ -49,8 +49,8 @@ export const typeDefs = gql`
 
     type User{
         id: ID
-        name: String
-        room: Room
+        display_name: String
+        images: [Image]
     }
 
     type Image{
@@ -137,9 +137,15 @@ export const typeDefs = gql`
         playlists: [Playlist]
     }
 
+    type AuthUrl{
+        url: String
+    }
+
     type Query{
         room(id: ID): Room
         user(id: ID): User
+        authorize(scopes: [String], redirectUri: String): String
+        me(accessToken: String): User
         rooms: [Room]
         users: [User]
         songRecs(seed: [String]): [SpotifySong]
@@ -149,10 +155,11 @@ export const typeDefs = gql`
         album(albumId: ID!): Album
         playlist(playlistId: ID!): Playlist
         artist(artistId: ID!): Artist
+        getAuthorizeUrl(scopes: [String], redirectUri: String): AuthUrl
     }
 
-    type Mutation{
-        addRoom(id: String, adminId: ID): Room
+    type Mutation {
+        addRoom(roomId: String, adminId: ID): Room
         addUser(name: String, currentRoomId: ID): User
         addUserToRoom(roomId: ID, userId: ID): String
         addSongToRoom(roomId: ID, song: SongInput): String
@@ -220,20 +227,8 @@ const Room = {
     }
 }
 
-const User = {
-    room: async (parent, args) => {
-        const roomDoc = await admin
-            .firestore()
-            .doc(`users/${parent.currentRoomId}`)
-            .get()
-        const room = roomDoc.data() as RoomType || undefined
-        return room
-    }
-}
-
 export const typeResolvers = {
     Room,
-    User,
     Album,
     Playlist,
     Artist

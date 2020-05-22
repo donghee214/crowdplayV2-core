@@ -1,5 +1,5 @@
 import { RoomType, UserType, SpotifySongType } from "../models/types"
-import { spotifyApi, createSpotifyNode } from './serverAuth'
+import { spotifyApi, createSpotifyNode, createUserAuthSpotifyNode } from './serverAuth'
 
 // DEPRECIATE THIS FILES TRY AND CATCH BLOCK FOR A WRAPPER FUNCTION TO JUST REDO IT IF CALL FAILS
 
@@ -169,5 +169,28 @@ export const getSearch = async({
             await createSpotifyNode()
             return getSearch({q, type, limit, offset})
         }
+    }
+}
+
+export const getUser = async(userId: string) => {
+    try{
+        return spotifyApi.getUser(userId)
+    }
+    catch(err){
+        if(err.status == 401){
+            await createSpotifyNode()
+            return getUser(userId)
+        }
+    }
+}
+
+export const getMe = async(accessToken: string) => {
+    try{
+        const userSpotifyNode = createUserAuthSpotifyNode(accessToken)
+        const user = await userSpotifyNode.getMe()
+        return user.body as UserType
+    }
+    catch(err){
+        console.error(err)
     }
 }

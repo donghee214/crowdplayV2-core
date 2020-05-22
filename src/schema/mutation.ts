@@ -1,6 +1,5 @@
 import admin from "../database/firestore"
 import { UserType, SongType, SpotifySongType } from "../models/types"
-import { attachSongListener } from "../database/firestore"
 import { getSong } from "../spotify/spotifyApis"
 var Vibrant = require('node-vibrant')
 
@@ -19,22 +18,22 @@ export default {
         }
     },
     deleteUser: async (parent, args) => {
-        const userDoc = await admin
-            .firestore()
-            .doc(`users/${args.userId}`)
-            .get()
-        const user = userDoc.data() as UserType || undefined
-        if(user.currentRoomId){
-            const roomDoc = await admin
-                .firestore()
-                .collection(`rooms/${user.currentRoomId}/users`)
-                .doc(args.userId)
-                .delete()
-        }
-        await admin
-            .firestore()
-            .doc(`users/${args.userId}`)
-            .delete()
+        // const userDoc = await admin
+        //     .firestore()
+        //     .doc(`users/${args.userId}`)
+        //     .get()
+        // const user = userDoc.data() as UserType || undefined
+        // if(user.currentRoomId){
+        //     const roomDoc = await admin
+        //         .firestore()
+        //         .collection(`rooms/${user.currentRoomId}/users`)
+        //         .doc(args.userId)
+        //         .delete()
+        // }
+        // await admin
+        //     .firestore()
+        //     .doc(`users/${args.userId}`)
+        //     .delete()
         return "success"
     },
     deleteRoom: async (parent, args) => {
@@ -44,13 +43,12 @@ export default {
             .delete()
         return "success"
     },
-    addRoom: async (parent, args: { id: string, adminId: string }) => {
+    addRoom: async (parent, args: { roomId: string, adminId: string }) => {
         const roomDoc = admin
             .firestore()
             .collection('rooms')
-            .doc(args.id)
+            .doc(args.roomId)
         await roomDoc.set(args)
-        await attachSongListener(args)
         return roomDoc
     },
     addUser: async (parent, args) => {
