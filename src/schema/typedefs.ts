@@ -39,10 +39,16 @@ export const typeDefs = gql`
         uri: String
     }
 
+    input UserInput{
+        id: ID
+        display_name: String
+        images: [ImageInput]
+    }
+
     type Room{
         id: ID
         name: String
-        adminUser: User
+        admin: User
         users: [User]
         songs: [Song]
     }
@@ -150,7 +156,7 @@ export const typeDefs = gql`
         users: [User]
         songRecs(seed: [String]): [SpotifySong]
         songs(roomId: ID): [Song]
-        search(q: String, limit: Int, offset: Int): SeachResult
+        search(q: String, limit: Int, offset: Int, type: [String]): SeachResult
         song(trackId: ID!): SpotifySong
         album(albumId: ID!): Album
         playlist(playlistId: ID!): Playlist
@@ -159,7 +165,7 @@ export const typeDefs = gql`
     }
 
     type Mutation {
-        addRoom(roomId: String, adminId: ID): Room
+        addRoom(id: ID, admin: UserInput): Room
         addUser(name: String, currentRoomId: ID): User
         addUserToRoom(roomId: ID, userId: ID): String
         addSongToRoom(roomId: ID, song: SongInput): String
@@ -202,14 +208,6 @@ const Playlist = {
 }
 
 const Room = {
-    adminUser: async (parent, args) => {
-        const userDoc =  await admin
-            .firestore()
-            .doc(`users/${parent.adminId}`)
-            .get()
-        const user = userDoc.data() as UserType || undefined
-        return user
-    },
     songs: async (parent, args) => {
         const songCollection = await admin
             .firestore()

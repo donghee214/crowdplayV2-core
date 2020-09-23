@@ -2,8 +2,7 @@ import * as admin from 'firebase-admin'
 import { TOPIC, pubsub } from "../schema/subscription"
 import { getSong } from "../spotify/spotifyApis"
 import { RoomType } from "../models/types"
-
-import * as serviceAccount from './service-account.json';
+require('dotenv').config();
 
 // export const attachSongListener = (room: { id: string }) => {
 //     admin.firestore()
@@ -42,15 +41,12 @@ import * as serviceAccount from './service-account.json';
 //     })
 // }
 
-
 admin.initializeApp({   
     credential: admin.credential.cert({
-        privateKey: serviceAccount.private_key,
-        clientEmail: serviceAccount.client_email,
-        projectId: serviceAccount.project_id,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        projectId: process.env.FIREBASE_PROJECT_ID,
     })
 });
-
-// initializeRoomListeners()
 
 export default admin

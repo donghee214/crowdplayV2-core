@@ -36,7 +36,9 @@ export default {
         return getUser(args.id)
     },
     me: async(parent, args) => {
-        return getMe(args.accessToken)
+        const ret = await getMe(args.accessToken)
+        console.log(ret)
+        return ret
     },
     rooms: async (parent, args) => {
         const userDocs = await admin

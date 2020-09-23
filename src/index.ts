@@ -5,6 +5,8 @@ import { ApolloServer } from 'apollo-server-express'
 import { swapHandler, refreshHandler } from "./spotify/refreshToken"
 import bodyParser from 'body-parser'
 
+require('dotenv').config();
+
 const PORT = 4000
 function parseCookies (request) {
     var list = {},
@@ -39,5 +41,5 @@ app.post('/refresh', refreshHandler)
 server.applyMiddleware({ app, cors: { origin: 'http://localhost:3000', credentials: true } });
 
 app.listen({ port: PORT }, () =>
-  console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
+  console.log(`🚀 Server ready at path ${server.graphqlPath}`)
 )

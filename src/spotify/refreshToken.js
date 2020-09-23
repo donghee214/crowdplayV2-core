@@ -138,6 +138,7 @@ export const swapHandler = async (req, res) => {
 
 export const refreshHandler = async (req, res) => {
 	try {
+		console.log('REFRESH CALLED')
 		// ensure refresh token parameter
 		if (!req.body.refresh_token) {
 			res.status(400).json({error: 'Refresh token is missing from body'});

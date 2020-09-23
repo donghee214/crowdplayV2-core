@@ -1,7 +1,6 @@
 export interface RoomType {
     id: string;
-    adminId: string;
-    isPaused: boolean;
+    admin: UserType;
     currentlyPlaying?: SongType;
 }
 
