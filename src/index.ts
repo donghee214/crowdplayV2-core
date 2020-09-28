@@ -7,7 +7,7 @@ import bodyParser from 'body-parser'
 
 require('dotenv').config();
 
-const PORT = 4000
+const PORT = process.env.PORT || 5000
 function parseCookies (request) {
     var list = {},
     rc = request.headers.cookie;
