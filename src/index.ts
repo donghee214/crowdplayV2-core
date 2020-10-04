@@ -37,7 +37,7 @@ app.use(bodyParser.json())
 app.post('/swap', swapHandler)
 app.post('/refresh', refreshHandler)
 
-server.applyMiddleware({ app, cors: { origin: 'http://localhost:3000', credentials: true } });
+server.applyMiddleware({ app, cors: { origin: '*', credentials: true } });
 
 app.listen({ port: PORT }, () =>
   console.log(`🚀 Server ready at path ${server.graphqlPath}`)
